@@ -1,30 +1,23 @@
+package com.unseenspace;
 
-import io.vertx.core.Future;
-import io.vertx.core.MultiMap;
 import io.vertx.core.Vertx;
 import io.vertx.core.WorkerExecutor;
 import io.vertx.core.http.HttpServer;
 
 import java.util.Collections;
-import java.util.Optional;
-import java.util.Scanner;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
-
-/**
- * @author <a href="http://tfox.org">Tim Fox</a>
- */
-public class Test {
+public class Delegator {
 
     public static void main(String[] args) {
         int processors = Runtime.getRuntime().availableProcessors();
         BlockingQueue<String> uuids = new LinkedBlockingQueue<>();
-        Collections.addAll(uuids, "hi", "bye");
+        Collections.addAll(uuids, args);
         System.out.println(uuids);
-        // Create an HTTP server which simply returns "Hello World!" to each request.
+
+
         Vertx vertx = Vertx.vertx();
         WorkerExecutor consumers = vertx.createSharedWorkerExecutor("consumers", processors, TimeUnit.MINUTES.toMillis(2));
         vertx
@@ -60,22 +53,20 @@ public class Test {
                         });
                         break;
                     case OPTIONS:
-                        req.response().putHeader("Accept", "*").end();
+                        req.response().putHeader("Access-Control-Allow-Origin", "*").end();
                         break;
                 }
             })
             .listen(handler -> {
+                HttpServer server = handler.result();
                 if (handler.succeeded()) {
-                    int i = handler.result().actualPort();
+                    int i = server.actualPort();
                     System.out.println("http://localhost:" + i + "/");
                 } else {
                     System.err.println("Failed to listen on port 8080");
+                    server.close();
                 }
             });
-
-        try (Scanner scanner = new Scanner(System.in)) {
-            scanner.nextLine();
-        }
     }
 
 }
